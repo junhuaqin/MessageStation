@@ -17,13 +17,13 @@ public class MessageStationPlatform {
 
 		MessageStream<Integer> mStream = new MessageStream<Integer>();
 
-		mStream.filter((Integer n) -> {
+		mStream.filter(n -> {
 			System.out.println("filter:" + n);
 			return n % 2 == 0;
-		})/*
-			 * .map(n -> { System.out.println("map:" + n); return "map to :" +
-			 * n; })
-			 */.forEach(System.out::println);
+		}).map(n -> {
+			System.out.println("map:" + n);
+			return "map to :" + n;
+		}).forEach(System.out::println);
 
 		/*
 		 * mStream.map(n -> { System.out.println("map:" + n); return "map to :"

@@ -4,46 +4,56 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class MessageStream<T> {
-	private StreamWrapper<T> headerWrapper;
-	private StreamWrapper<?> tailWrapper;
+	private StreamWrapper<T, ?> wrapper;
+	private MessageStream<?> previous;
 
-	private MessageStream<T> saveWrapper(StreamWrapper<?> wrapper) {
-		if (null == headerWrapper) {
-			headerWrapper = (StreamWrapper<T>) wrapper;
-			tailWrapper = headerWrapper;
-		} else {
-			tailWrapper.setNext(wrapper);
-			tailWrapper = wrapper;
-		}
+	public MessageStream<T> filter(Predicate<T> predicate) {
+		StreamWrapper<T, T> sw = new StreamFilterWrapper<T>(predicate);
+		linkWrapper(sw);
 
-		return this;
+		return createStream(sw);
 	}
 
-	public <E> MessageStream<T> filter(Predicate<E> predicate) {
-		return saveWrapper(new StreamFilterWrapper<E>(predicate));
+	public <R> MessageStream<R> map(Function<T, R> map) {
+		StreamWrapper<T, R> sw = new StreamMapWrapper<T, R>(map);
+		linkWrapper(sw);
+
+		return createStream(sw);
 	}
 
-	public <E, R> MessageStream<T> map(Function<E, R> map) {
-		return saveWrapper(new StreamMapWrapper<E, R>(map));
-	}
-
-	public <E> void forEach(Consumer<E> consumer) {
-		saveWrapper(new StreamConsumerWrapper<E>(consumer));
+	public void forEach(Consumer<T> consumer) {
+		StreamWrapper<T, Void> sw = new StreamConsumerWrapper<T>(consumer);
+		linkWrapper(sw);
 	}
 
 	public Object accept(Stream<T> stream) {
-		return headerWrapper.apply(stream);
+		return wrapper.apply(stream);
 	}
 
-	private static abstract class StreamWrapper<T> {
-		public abstract Object apply(Stream<T> stream);
+	private <R> MessageStream<R> createStream(StreamWrapper<T, R> func) {
+		MessageStream<R> mStream = new MessageStream<>();
+		mStream.previous = this;
 
-		public abstract StreamWrapper<?> setNext(StreamWrapper<?> next);
+		return mStream;
 	}
 
-	private static class StreamFilterWrapper<T> extends StreamWrapper<T> {
+	private void linkWrapper(StreamWrapper<T, ?> sw) {
+		wrapper = sw;
 
-		public StreamWrapper<T> _next;
+		if (null != previous) {
+			previous.wrapper.next(wrapper);
+		}
+	}
+
+	private static abstract class StreamWrapper<E_IN, E_OUT> {
+		public abstract Object apply(Stream<E_IN> stream);
+
+		public abstract void next(StreamWrapper<?, ?> next);
+	}
+
+	private static class StreamFilterWrapper<T> extends StreamWrapper<T, T> {
+
+		public StreamWrapper<T, ?> _next;
 		private Predicate<T> _pPredicate;
 
 		public StreamFilterWrapper(Predicate<T> predicate) {
@@ -56,16 +66,16 @@ public class MessageStream<T> {
 			return _next.apply(stream.filter(_pPredicate));
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
-		public StreamWrapper<?> setNext(StreamWrapper<?> next) {
+		public void next(StreamWrapper<?, ?> next) {
 			// TODO Auto-generated method stub
-			_next = (StreamWrapper<T>) next;
-			return _next;
+			_next = (StreamWrapper<T, ?>) next;
 		}
 	}
 
-	private static class StreamMapWrapper<T, R> extends StreamWrapper<T> {
-		public StreamWrapper<R> _next;
+	private static class StreamMapWrapper<T, R> extends StreamWrapper<T, R> {
+		public StreamWrapper<R, ?> _next;
 		private Function<T, R> _map;
 
 		public StreamMapWrapper(Function<T, R> function) {
@@ -78,15 +88,15 @@ public class MessageStream<T> {
 			return _next.apply(stream.map(_map));
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
-		public StreamWrapper<?> setNext(StreamWrapper<?> next) {
+		public void next(StreamWrapper<?, ?> next) {
 			// TODO Auto-generated method stub
-			_next = (StreamWrapper<R>) next;
-			return _next;
+			_next = (StreamWrapper<R, ?>) next;
 		}
 	}
 
-	private static class StreamConsumerWrapper<T> extends StreamWrapper<T> {
+	private static class StreamConsumerWrapper<T> extends StreamWrapper<T, Void> {
 		private Consumer<T> _consumer;
 
 		public StreamConsumerWrapper(Consumer<T> consumer) {
@@ -101,9 +111,8 @@ public class MessageStream<T> {
 		}
 
 		@Override
-		public StreamWrapper<?> setNext(StreamWrapper<?> next) {
+		public void next(StreamWrapper<?, ?> next) {
 			// TODO Auto-generated method stub
-			return null;
 		}
 	}
 }
