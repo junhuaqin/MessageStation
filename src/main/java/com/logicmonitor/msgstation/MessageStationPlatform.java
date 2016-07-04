@@ -1,3 +1,5 @@
+package com.logicmonitor.msgstation;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,7 +17,7 @@ public class MessageStationPlatform {
 		 * filter.setNext(mapper).setNext(consum);
 		 */
 
-		MessageStream<Integer> mStream = new MessageStream<Integer>();
+		MessageStream<Integer> mStream = new MessageStream<>();
 
 		mStream.filter(n -> {
 			System.out.println("filter:" + n);

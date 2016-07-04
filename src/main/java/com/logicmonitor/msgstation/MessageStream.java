@@ -1,3 +1,5 @@
+package com.logicmonitor.msgstation;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -8,21 +10,21 @@ public class MessageStream<T> {
 	private MessageStream<?> previous;
 
 	public MessageStream<T> filter(Predicate<T> predicate) {
-		StreamWrapper<T, T> sw = new StreamFilterWrapper<T>(predicate);
+		StreamWrapper<T, T> sw = new StreamFilterWrapper<>(predicate);
 		linkWrapper(sw);
 
-		return createStream(sw);
+		return createStream();
 	}
 
 	public <R> MessageStream<R> map(Function<T, R> map) {
-		StreamWrapper<T, R> sw = new StreamMapWrapper<T, R>(map);
+		StreamWrapper<T, R> sw = new StreamMapWrapper<>(map);
 		linkWrapper(sw);
 
-		return createStream(sw);
+		return createStream();
 	}
 
 	public void forEach(Consumer<T> consumer) {
-		StreamWrapper<T, Void> sw = new StreamConsumerWrapper<T>(consumer);
+		StreamWrapper<T, Void> sw = new StreamConsumerWrapper<>(consumer);
 		linkWrapper(sw);
 	}
 
@@ -30,7 +32,7 @@ public class MessageStream<T> {
 		return wrapper.apply(stream);
 	}
 
-	private <R> MessageStream<R> createStream(StreamWrapper<T, R> func) {
+	private <R> MessageStream<R> createStream() {
 		MessageStream<R> mStream = new MessageStream<>();
 		mStream.previous = this;
 
@@ -38,6 +40,10 @@ public class MessageStream<T> {
 	}
 
 	private void linkWrapper(StreamWrapper<T, ?> sw) {
+        if (null != wrapper) {
+            throw new IllegalStateException("stream has already been operated upon or closed");
+        }
+
 		wrapper = sw;
 
 		if (null != previous) {
@@ -46,52 +52,48 @@ public class MessageStream<T> {
 	}
 
 	private static abstract class StreamWrapper<E_IN, E_OUT> {
-		public abstract Object apply(Stream<E_IN> stream);
+        protected abstract Object apply(Stream<E_IN> stream);
 
-		public abstract void next(StreamWrapper<?, ?> next);
+        protected abstract void next(StreamWrapper<?, ?> next);
 	}
 
 	private static class StreamFilterWrapper<T> extends StreamWrapper<T, T> {
 
-		public StreamWrapper<T, ?> _next;
+		private StreamWrapper<T, ?> _next;
 		private Predicate<T> _pPredicate;
 
-		public StreamFilterWrapper(Predicate<T> predicate) {
+        private StreamFilterWrapper(Predicate<T> predicate) {
 			_pPredicate = predicate;
 		}
 
 		@Override
-		public Object apply(Stream<T> stream) {
-			// TODO Auto-generated method stub
+        protected Object apply(Stream<T> stream) {
 			return _next.apply(stream.filter(_pPredicate));
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void next(StreamWrapper<?, ?> next) {
-			// TODO Auto-generated method stub
+        protected void next(StreamWrapper<?, ?> next) {
 			_next = (StreamWrapper<T, ?>) next;
 		}
 	}
 
 	private static class StreamMapWrapper<T, R> extends StreamWrapper<T, R> {
-		public StreamWrapper<R, ?> _next;
+		private StreamWrapper<R, ?> _next;
 		private Function<T, R> _map;
 
-		public StreamMapWrapper(Function<T, R> function) {
+        private StreamMapWrapper(Function<T, R> function) {
 			_map = function;
 		}
 
 		@Override
-		public Object apply(Stream<T> stream) {
-			// TODO Auto-generated method stub
+        protected Object apply(Stream<T> stream) {
 			return _next.apply(stream.map(_map));
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void next(StreamWrapper<?, ?> next) {
-			// TODO Auto-generated method stub
+        protected void next(StreamWrapper<?, ?> next) {
 			_next = (StreamWrapper<R, ?>) next;
 		}
 	}
@@ -99,20 +101,18 @@ public class MessageStream<T> {
 	private static class StreamConsumerWrapper<T> extends StreamWrapper<T, Void> {
 		private Consumer<T> _consumer;
 
-		public StreamConsumerWrapper(Consumer<T> consumer) {
+        private StreamConsumerWrapper(Consumer<T> consumer) {
 			_consumer = consumer;
 		}
 
 		@Override
-		public Object apply(Stream<T> stream) {
-			// TODO Auto-generated method stub
+        protected Object apply(Stream<T> stream) {
 			stream.forEach(_consumer);
 			return null;
 		}
 
 		@Override
-		public void next(StreamWrapper<?, ?> next) {
-			// TODO Auto-generated method stub
+        protected void next(StreamWrapper<?, ?> next) {
 		}
 	}
 }
