@@ -9,21 +9,21 @@ public class MessageStream<T> {
 	private StreamWrapper<T, ?> wrapper;
 	private MessageStream<?> previous;
 
-	public MessageStream<T> filter(Predicate<T> predicate) {
+	public MessageStream<T> filter(Predicate<? super T> predicate) {
 		StreamWrapper<T, T> sw = new StreamFilterWrapper<>(predicate);
 		linkWrapper(sw);
 
 		return createStream();
 	}
 
-	public <R> MessageStream<R> map(Function<T, R> map) {
+	public <R> MessageStream<R> map(Function<? super T, ? extends R> map) {
 		StreamWrapper<T, R> sw = new StreamMapWrapper<>(map);
 		linkWrapper(sw);
 
 		return createStream();
 	}
 
-	public void forEach(Consumer<T> consumer) {
+	public void forEach(Consumer<? super T> consumer) {
 		StreamWrapper<T, Void> sw = new StreamConsumerWrapper<>(consumer);
 		linkWrapper(sw);
 	}
@@ -60,9 +60,9 @@ public class MessageStream<T> {
 	private static class StreamFilterWrapper<T> extends StreamWrapper<T, T> {
 
 		private StreamWrapper<T, ?> _next;
-		private Predicate<T> _pPredicate;
+		private Predicate<? super T> _pPredicate;
 
-        private StreamFilterWrapper(Predicate<T> predicate) {
+        private StreamFilterWrapper(Predicate<? super T> predicate) {
 			_pPredicate = predicate;
 		}
 
@@ -80,9 +80,9 @@ public class MessageStream<T> {
 
 	private static class StreamMapWrapper<T, R> extends StreamWrapper<T, R> {
 		private StreamWrapper<R, ?> _next;
-		private Function<T, R> _map;
+		private Function<? super T, ? extends R> _map;
 
-        private StreamMapWrapper(Function<T, R> function) {
+        private StreamMapWrapper(Function<? super T, ? extends R> function) {
 			_map = function;
 		}
 
@@ -99,9 +99,9 @@ public class MessageStream<T> {
 	}
 
 	private static class StreamConsumerWrapper<T> extends StreamWrapper<T, Void> {
-		private Consumer<T> _consumer;
+		private Consumer<? super T> _consumer;
 
-        private StreamConsumerWrapper(Consumer<T> consumer) {
+        private StreamConsumerWrapper(Consumer<? super T> consumer) {
 			_consumer = consumer;
 		}
 

@@ -34,5 +34,7 @@ public class MessageStationPlatform {
 		 */
 		List<Integer> values = Arrays.asList(0, 1, 2, 3);
 		mStream.accept(values.stream());
+		System.out.println("======");
+		mStream.accept(values.stream());
 	}
 }
