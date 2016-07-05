@@ -5,7 +5,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class MessageStream<T> {
+public class MessageStream<T>{
 	private StreamWrapper<T, ?> wrapper;
 	private MessageStream<?> previous;
 
