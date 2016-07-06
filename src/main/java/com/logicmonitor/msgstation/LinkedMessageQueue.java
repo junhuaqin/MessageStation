@@ -34,7 +34,7 @@ class LinkedMessageQueue<T> implements MessageQueueReceiver {
 		List<T> messages = new LinkedList<>();
 		do {
 			T msg = queue.poll();
-			if (msg == null) {
+			if (null == msg) {
 				break;
 			}
 
