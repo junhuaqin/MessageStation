@@ -23,8 +23,15 @@ public class MessageStream<T>{
 		return createStream();
 	}
 
+	public MessageStream<T> peek(Consumer<? super T> consumer) {
+		StreamWrapper<T, T> sw = new StreamPeekWrapper<>(consumer);
+		linkWrapper(sw);
+
+		return createStream();
+	}
+
 	public void forEach(Consumer<? super T> consumer) {
-		StreamWrapper<T, Void> sw = new StreamConsumerWrapper<>(consumer);
+		StreamWrapper<T, Void> sw = new StreamForeachWrapper<>(consumer);
 		linkWrapper(sw);
 	}
 
@@ -47,19 +54,21 @@ public class MessageStream<T>{
 		wrapper = sw;
 
 		if (null != previous) {
-			previous.wrapper.next(wrapper);
+			((StreamWrapper<?, T>)previous.wrapper).next(wrapper);
 		}
 	}
 
 	private static abstract class StreamWrapper<E_IN, E_OUT> {
+		protected StreamWrapper<E_OUT, ?> _next;
+
         protected abstract Object apply(Stream<E_IN> stream);
 
-        protected abstract void next(StreamWrapper<?, ?> next);
+        protected void next(StreamWrapper<E_OUT, ?> next){
+			_next = next;
+		}
 	}
 
 	private static class StreamFilterWrapper<T> extends StreamWrapper<T, T> {
-
-		private StreamWrapper<T, ?> _next;
 		private Predicate<? super T> _pPredicate;
 
         private StreamFilterWrapper(Predicate<? super T> predicate) {
@@ -70,16 +79,9 @@ public class MessageStream<T>{
         protected Object apply(Stream<T> stream) {
 			return _next.apply(stream.filter(_pPredicate));
 		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-        protected void next(StreamWrapper<?, ?> next) {
-			_next = (StreamWrapper<T, ?>) next;
-		}
 	}
 
 	private static class StreamMapWrapper<T, R> extends StreamWrapper<T, R> {
-		private StreamWrapper<R, ?> _next;
 		private Function<? super T, ? extends R> _map;
 
         private StreamMapWrapper(Function<? super T, ? extends R> function) {
@@ -90,18 +92,25 @@ public class MessageStream<T>{
         protected Object apply(Stream<T> stream) {
 			return _next.apply(stream.map(_map));
 		}
+	}
 
-		@SuppressWarnings("unchecked")
+	private static class StreamPeekWrapper<T> extends StreamWrapper<T, T> {
+		private Consumer<? super T> _consumer;
+
+		private StreamPeekWrapper(Consumer<? super T> consumer) {
+			_consumer = consumer;
+		}
+
 		@Override
-        protected void next(StreamWrapper<?, ?> next) {
-			_next = (StreamWrapper<R, ?>) next;
+		protected Object apply(Stream<T> stream) {
+			return _next.apply(stream.peek(_consumer));
 		}
 	}
 
-	private static class StreamConsumerWrapper<T> extends StreamWrapper<T, Void> {
+	private static class StreamForeachWrapper<T> extends StreamWrapper<T, Void> {
 		private Consumer<? super T> _consumer;
 
-        private StreamConsumerWrapper(Consumer<? super T> consumer) {
+        private StreamForeachWrapper(Consumer<? super T> consumer) {
 			_consumer = consumer;
 		}
 
@@ -109,10 +118,6 @@ public class MessageStream<T>{
         protected Object apply(Stream<T> stream) {
 			stream.forEach(_consumer);
 			return null;
-		}
-
-		@Override
-        protected void next(StreamWrapper<?, ?> next) {
 		}
 	}
 }
