@@ -8,7 +8,7 @@ import java.util.Map;
  * Created by rbtq on 7/5/16.
  */
 public class MessageStation {
-	private Map<String, MessageQueue> MessageQueues = new HashMap<>();
+	private Map<String, MessageQueueReceiver> MessageQueues = new HashMap<>();
 
 	public <T> void createTopic(final String topic, MessageStream<T> messageStream) {
 		if (!MessageQueues.containsKey(topic)) {

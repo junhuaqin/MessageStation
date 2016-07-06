@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by rbtq on 7/5/16.
  */
-class LinkedMessageQueue<T> implements MessageQueue {
+class LinkedMessageQueue<T> implements MessageQueueReceiver {
 
 	private static final int PROCESS_PERIOD = 1; // run once every minute.
 	private LinkedBlockingQueue<T> queue;
