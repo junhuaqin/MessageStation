@@ -26,8 +26,8 @@ class LinkedMessageQueue<T> implements MessageQueueReceiver {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean offer(Object obj) {
-		return queue.offer((T) obj);
+	public void put(Object obj) throws InterruptedException {
+		queue.put((T) obj);
 	}
 
 	private List<T> getNewMessages() {

@@ -36,7 +36,7 @@ public class MessageStationPlatform {
 		for (int i = 0; i < 100; i++) {
 			System.out.println("==================");
 			messageStation.publish("Integer", i);
-			messageStation.publish("Long", Long.valueOf(i));
+			messageStation.publish("Long", (long)i);
 			messageStation.publish("String", "test:" + i);
 			Thread.sleep(100);
 		}

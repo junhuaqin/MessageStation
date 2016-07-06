@@ -1,14 +1,14 @@
 package com.logicmonitor.msgstation;
 
 import java.nio.ReadOnlyBufferException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by rbtq on 7/5/16.
  */
 public class MessageStation {
-	private Map<String, MessageQueueReceiver> MessageQueues = new HashMap<>();
+	private Map<String, MessageQueueReceiver> MessageQueues = new ConcurrentHashMap<>();
 
 	public <T> void createTopic(final String topic, MessageStream<T> messageStream) {
 		if (!MessageQueues.containsKey(topic)) {
@@ -18,11 +18,11 @@ public class MessageStation {
 		}
 	}
 
-	public <T> boolean publish(final String topic, T message) {
+	public <T> void publish(final String topic, T message) throws InterruptedException {
 		if (MessageQueues.containsKey(topic)) {
-			return MessageQueues.get(topic).offer(message);
+			MessageQueues.get(topic).put(message);
 		} else {
-			return false;
+			throw new IllegalArgumentException(String.format("no such topic:%s", topic));
 		}
 	}
 }
