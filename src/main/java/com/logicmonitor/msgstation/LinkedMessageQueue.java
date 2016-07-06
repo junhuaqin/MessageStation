@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by rbtq on 7/5/16.
  */
-class LinkedMessageQueue<T> implements MessageQueueReceiver {
+class LinkedMessageQueue<T> implements MessagePublisher {
 
 	private static final int PROCESS_PERIOD = 1; // run once every minute.
 	private LinkedBlockingQueue<T> queue;
@@ -26,7 +26,7 @@ class LinkedMessageQueue<T> implements MessageQueueReceiver {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void put(Object obj) throws InterruptedException {
+	public void publish(Object obj) throws InterruptedException {
 		queue.put((T) obj);
 	}
 
