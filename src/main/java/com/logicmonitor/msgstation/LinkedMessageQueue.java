@@ -32,14 +32,11 @@ class LinkedMessageQueue<T> implements MessagePublisher {
 
 	private List<T> getNewMessages() {
 		List<T> messages = new LinkedList<>();
-		do {
-			T msg = queue.poll();
-			if (null == msg) {
-				break;
-			}
 
+		T msg;
+		while((msg = queue.poll()) != null) {
 			messages.add(msg);
-		} while (true);
+		}
 
 		return messages;
 	}
